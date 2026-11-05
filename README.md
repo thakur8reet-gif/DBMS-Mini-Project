@@ -1,56 +1,36 @@
 # ResolveIQ — Multi-Tenant Helpdesk & SLA Intelligence Platform
 
-ResolveIQ helps support teams manage tenant-isolated tickets, enforce response/resolution SLAs, audit escalations, and retrieve semantically similar incidents.
+ResolveIQ manages tenant-isolated support tickets, enforces response/resolution SLAs, audits escalations, and retrieves semantically similar incidents.
 
 ## Stack
-- Next.js 15 / TypeScript (web + API)
-- PostgreSQL 16 (transactional system of record)
-- Qdrant (vector similarity search)
-- Sentence Transformers `all-MiniLM-L6-v2` (384-d embeddings)
+Next.js 15 / TypeScript · PostgreSQL 16 · Qdrant · Sentence Transformers all-MiniLM-L6-v2.
 
 ## Local setup
-1. Install Node.js 20+, Docker Compose, and Python 3.10+.
-2. Copy environment settings: `cp .env.example .env.local`; set a strong `AUTH_SECRET` and database password.
-3. Start infrastructure: `docker compose up -d`.
-4. Apply SQL in order:
+1. Install Node.js 20+, Docker Compose, Python 3.10+.
+2. Copy `.env.example` to both `.env` (Docker Compose and Python services) and `.env.local` (Next.js). Set a strong `AUTH_SECRET`, a unique `SEMANTIC_INTERNAL_TOKEN`, and matching PostgreSQL credentials in `POSTGRES_PASSWORD` and `DATABASE_URL`.
+3. Start PostgreSQL and Qdrant: `docker compose up -d`.
+4. Apply migrations in order (Compose does not auto-run SQL, so the example query file is never executed as a migration):
    ```bash
-   psql "$DATABASE_URL" -f db/001_schema.sql
-   psql "$DATABASE_URL" -f db/002_ddl_features.sql
-   psql "$DATABASE_URL" -f db/003_seed.sql
-   psql "$DATABASE_URL" -f db/004_advanced_features.sql
-   psql "$DATABASE_URL" -f db/005_integrity_validation.sql
+   set -a; source .env; set +a
+   for f in db/00*.sql; do psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done
    ```
-5. Install web dependencies and run:
-   ```bash
-   npm install
-   npm run dev
-   ```
-6. Open http://localhost:3000/login. Provision a user in PostgreSQL with a bcrypt password hash and an ADMIN or AGENT role. The demo seed intentionally has a placeholder hash; it is not a usable login.
-7. Install vector worker dependencies: `pip install -r services/requirements.txt`. Configure `QDRANT_URL`, then use `services/vector_index.py` from a trusted worker after ticket commits.
+5. Install dependencies and run Next.js: `npm install && npm run dev`.
+6. Provision a login: `pip install -r services/requirements.txt && python services/create_user.py --tenant demo --name "Demo Admin" --email admin@example.test --role ADMIN`. Set a password when prompted.
+7. Start the private semantic service: `set -a; source .env; set +a; uvicorn services.semantic_api:app --host 127.0.0.1 --port 8000`.
+8. Start the SLA/vector worker: `set -a; source .env; set +a; python -m services.worker`. For a one-shot run set `WORKER_ONCE=true`.
+9. Open http://localhost:3000/login.
 
-## Required environment variables
-See [.env.example](.env.example). Never commit `.env.local`, credentials, JWT secrets, or production data.
-
-## Database and workflows
-- Schema and ER model: [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md)
+## Database
+- ER model and data dictionary: [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md)
+- DDL and constraints: [db/001_schema.sql](db/001_schema.sql), migrations 002–006
+- DML examples: [db/queries.sql](db/queries.sql)
 - Advanced SQL: [db/004_advanced_features.sql](db/004_advanced_features.sql)
-- SQL examples: [db/queries.sql](db/queries.sql)
-- Vector strategy: [docs/SEMANTIC_SEARCH.md](docs/SEMANTIC_SEARCH.md)
 - Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- Full project report: [docs/PROJECT_REPORT.md](docs/PROJECT_REPORT.md)
-- Team plan: [docs/TEAM.md](docs/TEAM.md)
+- Semantic search: [docs/SEMANTIC_SEARCH.md](docs/SEMANTIC_SEARCH.md)
+- Report: [docs/PROJECT_REPORT.md](docs/PROJECT_REPORT.md)
 
-## SLA worker
-Schedule a trusted worker to call `SELECT fn_evaluate_sla(<tenant_id>);` for each active tenant at the desired cadence. The function marks breaches and writes idempotent escalation events. Production deployments should use a scheduler/queue and monitor failures.
+## Security
+Never commit real secrets or production data. The semantic API should remain private and must use a separate `SEMANTIC_INTERNAL_TOKEN`. Tenant identity is taken from a signed HttpOnly session, never from request JSON. Qdrant results are revalidated in PostgreSQL.
 
-## Git contribution practice
-The history is organized as one commit per project requirement (1–17). Team members must make their own attributable commits and document their actual contributions; do not rewrite authorship.
-
-## Submission checklist
-- [ ] Fill in the approved two-member team names/SRNs in docs/TEAM.md.
-- [ ] Configure a real admin/agent account and demonstrate login.
-- [ ] Run SQL migrations against PostgreSQL 16.
-- [ ] Execute tests and record actual results in docs/TESTING.md.
-- [ ] Capture genuine application screenshots and add them to docs/screenshots/.
-- [ ] Demonstrate Qdrant indexing and tenant-filtered search.
-- [ ] Deploy/configure the Next.js application with environment variables.
+## Team and evaluation
+The course requires two instructor-approved members; complete [docs/TEAM.md](docs/TEAM.md) with real names/SRNs. Capture genuine screenshots and record actual test output in [docs/TESTING.md](docs/TESTING.md). The commit history contains one commit for each of the 17 requirements.
