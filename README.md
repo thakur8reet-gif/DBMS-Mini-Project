@@ -1,32 +1,56 @@
 # ResolveIQ — Multi-Tenant Helpdesk & SLA Intelligence Platform
 
-ResolveIQ is a multi-tenant support operations platform that helps organizations manage customer issues, enforce service-level agreements (SLAs), identify at-risk tickets, and escalate unresolved work to the correct roles.
+ResolveIQ helps support teams manage tenant-isolated tickets, enforce response/resolution SLAs, audit escalations, and retrieve semantically similar incidents.
 
-## Problem statement
-Basic ticket CRUD systems do not help support teams predict SLA breaches, prioritize work across tenants, preserve tenant isolation, or find related historical incidents. ResolveIQ combines tenant-scoped ticket management, policy-driven SLA clocks, auditable escalation, operational analytics, and semantic retrieval of similar tickets.
+## Stack
+- Next.js 15 / TypeScript (web + API)
+- PostgreSQL 16 (transactional system of record)
+- Qdrant (vector similarity search)
+- Sentence Transformers `all-MiniLM-L6-v2` (384-d embeddings)
 
-## Project objectives
-- Isolate organizations (tenants) and their users, customers, tickets, policies, and support configuration.
-- Enforce response and resolution targets from category/priority-specific SLA policies.
-- Record first response, SLA breaches, and escalation events as auditable data.
-- Provide role-aware workflows for tenant administrators, support agents, and customers.
-- Search historical ticket descriptions semantically using a vector index.
-- Demonstrate advanced database design, integrity, transactions, indexing, views, functions, and triggers through a functional Next.js application.
+## Local setup
+1. Install Node.js 20+, Docker Compose, and Python 3.10+.
+2. Copy environment settings: `cp .env.example .env.local`; set a strong `AUTH_SECRET` and database password.
+3. Start infrastructure: `docker compose up -d`.
+4. Apply SQL in order:
+   ```bash
+   psql "$DATABASE_URL" -f db/001_schema.sql
+   psql "$DATABASE_URL" -f db/002_ddl_features.sql
+   psql "$DATABASE_URL" -f db/003_seed.sql
+   psql "$DATABASE_URL" -f db/004_advanced_features.sql
+   psql "$DATABASE_URL" -f db/005_integrity_validation.sql
+   ```
+5. Install web dependencies and run:
+   ```bash
+   npm install
+   npm run dev
+   ```
+6. Open http://localhost:3000/login. Provision a user in PostgreSQL with a bcrypt password hash and an ADMIN or AGENT role. The demo seed intentionally has a placeholder hash; it is not a usable login.
+7. Install vector worker dependencies: `pip install -r services/requirements.txt`. Configure `QDRANT_URL`, then use `services/vector_index.py` from a trusted worker after ticket commits.
 
-## Core workflows
-1. A customer submits a ticket with a category and priority.
-2. The API validates tenant ownership and creates the ticket and its SLA tracking row in one PostgreSQL transaction.
-3. An agent responds or updates the ticket; first-response time is recorded once.
-4. SLA evaluation identifies approaching deadlines and breaches.
-5. Escalation policy routes overdue work to a configured role and records an escalation log.
-6. Support staff search similar resolved incidents using Qdrant semantic retrieval.
+## Required environment variables
+See [.env.example](.env.example). Never commit `.env.local`, credentials, JWT secrets, or production data.
 
-## Technology direction
-- Web: Next.js App Router, TypeScript
-- Relational database: PostgreSQL
-- Vector database: Qdrant (ticket text embeddings and metadata)
-- Authentication: signed session/JWT integration with password hashing and server-side role checks
-- Validation: Zod at the API boundary plus PostgreSQL constraints
-- Version control: Git and GitHub
+## Database and workflows
+- Schema and ER model: [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md)
+- Advanced SQL: [db/004_advanced_features.sql](db/004_advanced_features.sql)
+- SQL examples: [db/queries.sql](db/queries.sql)
+- Vector strategy: [docs/SEMANTIC_SEARCH.md](docs/SEMANTIC_SEARCH.md)
+- Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Full project report: [docs/PROJECT_REPORT.md](docs/PROJECT_REPORT.md)
+- Team plan: [docs/TEAM.md](docs/TEAM.md)
 
-See `docs/` for the requirement-by-requirement design and implementation.
+## SLA worker
+Schedule a trusted worker to call `SELECT fn_evaluate_sla(<tenant_id>);` for each active tenant at the desired cadence. The function marks breaches and writes idempotent escalation events. Production deployments should use a scheduler/queue and monitor failures.
+
+## Git contribution practice
+The history is organized as one commit per project requirement (1–17). Team members must make their own attributable commits and document their actual contributions; do not rewrite authorship.
+
+## Submission checklist
+- [ ] Fill in the approved two-member team names/SRNs in docs/TEAM.md.
+- [ ] Configure a real admin/agent account and demonstrate login.
+- [ ] Run SQL migrations against PostgreSQL 16.
+- [ ] Execute tests and record actual results in docs/TESTING.md.
+- [ ] Capture genuine application screenshots and add them to docs/screenshots/.
+- [ ] Demonstrate Qdrant indexing and tenant-filtered search.
+- [ ] Deploy/configure the Next.js application with environment variables.
