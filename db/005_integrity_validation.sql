@@ -1,7 +1,7 @@
 -- Requirement 12: database-level validation and integrity rules.
 ALTER TABLE ticket ADD CONSTRAINT chk_ticket_subject_nonblank CHECK (length(trim(subject)) BETWEEN 4 AND 200);
 ALTER TABLE ticket ADD CONSTRAINT chk_ticket_description_nonblank CHECK (length(trim(description)) BETWEEN 10 AND 10000);
-ALTER TABLE customer ADD CONSTRAINT chk_customer_email_shape CHECK (email ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$');
+ALTER TABLE customer ADD CONSTRAINT chk_customer_email_shape CHECK (email ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$');
 ALTER TABLE app_role ADD CONSTRAINT chk_role_name CHECK (role_name IN ('ADMIN','AGENT','CUSTOMER','MANAGER'));
 ALTER TABLE ticket_attachment ADD CONSTRAINT chk_attachment_filename CHECK (length(trim(file_name)) BETWEEN 1 AND 200);
 ALTER TABLE ticket_attachment ADD CONSTRAINT chk_attachment_path CHECK (length(trim(file_path)) BETWEEN 1 AND 400);

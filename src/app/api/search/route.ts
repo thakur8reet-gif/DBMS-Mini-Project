@@ -12,8 +12,9 @@ export async function POST(req:NextRequest){
   if(!response.ok)throw new Error("Vector service unavailable");
   const data=await response.json() as {results:{ticket_id:number;score:number}[]};
   const ids=data.results.map(x=>x.ticket_id);if(!ids.length)return NextResponse.json({results:[]});
-  const {rows}=await pool.query("SELECT ticket_id,subject,customer_name,priority_name,status_name FROM v_ticket_operations WHERE tenant_id=$1 AND ticket_id=ANY($2::bigint[])",[session.tenantId,ids]);
-  const byId=new Map(rows.map((r:any)=>[Number(r.ticket_id),r]));
-  return NextResponse.json({results:data.results.flatMap(x=>byId.has(x.ticket_id)?[{...byId.get(x.ticket_id),score:x.score}]:[])});
+  type TicketSearchRow={ticket_id:number;subject:string;customer_name:string;priority_name:string;status_name:string};
+  const {rows}=await pool.query<TicketSearchRow>("SELECT ticket_id,subject,customer_name,priority_name,status_name FROM v_ticket_operations WHERE tenant_id=$1 AND ticket_id=ANY($2::bigint[])",[session.tenantId,ids]);
+  const byId=new Map(rows.map(row=>[Number(row.ticket_id),row]));
+  return NextResponse.json({results:data.results.flatMap(result=>{const row=byId.get(result.ticket_id);return row?[{...row,score:result.score}]:[]})});
  }catch{return NextResponse.json({error:"Semantic search is temporarily unavailable"},{status:503});}
 }
