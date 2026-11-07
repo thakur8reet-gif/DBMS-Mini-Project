@@ -29,11 +29,14 @@ export default function Home() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [creating, setCreating] = useState(false);
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const [searching, setSearching] = useState(false);
 
   const fetchTickets = useCallback(async () => {
@@ -87,6 +90,8 @@ export default function Home() {
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setNotice("");
+    setCreating(true);
     try {
       const response = await fetch("/api/tickets", {
         method: "POST",
@@ -107,8 +112,11 @@ export default function Home() {
       setDescription("");
       setCustomerEmail("");
       await load();
+      setNotice("Ticket created and added to the queue.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Request failed");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -130,6 +138,7 @@ export default function Home() {
         throw new Error(data.error || "Search failed");
       }
       setResults(data.results ?? []);
+      setHasSearched(true);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Search failed");
     } finally {
@@ -167,7 +176,7 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="grid">
+      <section className="grid" aria-label="Ticket summary">
         <div className="card">
           <div className="muted">Total tickets</div>
           <div className="metric">{tickets.length}</div>
@@ -183,17 +192,18 @@ export default function Home() {
       </section>
 
       {error && (
-        <p className="error">
+        <p className="error" role="alert">
           {error} · <Link href="/login">Sign in</Link>
         </p>
       )}
+      {notice && <p className="success" role="status">{notice}</p>}
 
       <section className="layout">
         <div className="card">
           <h2>Ticket queue</h2>
           <p className="muted">Tenant-scoped operational worklist</p>
           {loading ? (
-            <p>Loading tickets…</p>
+            <p className="empty" role="status">Loading tickets…</p>
           ) : (
             <div className="tablewrap">
               <table>
@@ -226,7 +236,7 @@ export default function Home() {
                 </tbody>
               </table>
               {tickets.length === 0 && (
-                <p className="muted">No tickets found.</p>
+                <p className="empty">No tickets yet. Create one to start tracking support work.</p>
               )}
             </div>
           )}
@@ -243,7 +253,10 @@ export default function Home() {
                 required
                 minLength={3}
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setHasSearched(false);
+                }}
                 placeholder="e.g. VPN disconnects after login"
               />
             </label>
@@ -254,7 +267,7 @@ export default function Home() {
           {results.map((result) => (
             <div
               key={result.ticket_id}
-              style={{ padding: "10px 0", borderBottom: "1px solid #edf0f5" }}
+              className="search-result"
             >
               <b>
                 #{result.ticket_id} · {result.subject}
@@ -265,6 +278,9 @@ export default function Home() {
               </div>
             </div>
           ))}
+          {hasSearched && !searching && results.length === 0 && (
+            <p className="empty">No similar tickets found for this search.</p>
+          )}
         </div>
 
         <form className="card" onSubmit={create}>
@@ -301,8 +317,8 @@ export default function Home() {
               placeholder="Defaults to your signed-in email"
             />
           </label>
-          <button className="primary" type="submit">
-            Create ticket
+          <button className="primary" type="submit" disabled={creating}>
+            {creating ? "Creating ticket…" : "Create ticket"}
           </button>
         </form>
       </section>
