@@ -27,3 +27,20 @@ Run `pip install -r tests/requirements.txt` then `pytest -q`. Set TEST_DATABASE_
 - Worker indexed the ticket into Qdrant; authenticated semantic search returned HTTP 200 and included the new ticket.
 - Tested with Qdrant server 1.12.4 and qdrant-client 1.13.3.
 - Screenshots have not yet been added. Capture the running app and save the images under `docs/screenshots/` before submission.
+
+## Verification run — 2026-11-09 (Asia/Kolkata)
+
+These results were run against a disposable local PostgreSQL 18.6 database, not the hosted production database.
+
+- Applied migrations 001–008 to the fresh local database: **8 applied**.
+- Ran the included Python suite with Python 3.12.10 and pytest 8.4.2: **4 passed in 3.17s**.
+- `npm run lint`: **passed**.
+- `npm run build -- --webpack`: **passed**, including TypeScript and static page generation.
+- Local app flow: sign-in **200**, ticket list **200**, ticket create **201**, worker tick **200** and created **1** SLA escalation.
+- Semantic search configuration check: **not configured** in the isolated test process; the app correctly disabled search and returned `503` with “Semantic search is not configured on this deployment.”
+- Production migration 008: **applied** using the Vercel production environment runner; it queues pre-existing tickets for vector indexing.
+- Screenshots: still needed in `docs/screenshots/` after browser access is enabled.
+
+## Hosted deployment status
+
+Deployment `dpl_7336MdD9r468SJ1VcQhwfLLhQrnw` was ready at `https://resolveiq-gamma.vercel.app` before the latest UI status change. Production variables currently include `DATABASE_URL`, `AUTH_SECRET`, and `CRON_SECRET`; Qdrant credentials are not configured there. The dashboard worker evaluates SLA rules every minute while an authenticated dashboard is open. Vercel Hobby runs the all-tenant catch-up once daily. Semantic search must remain described as unavailable until Qdrant Cloud is configured and the latest UI update is deployed.

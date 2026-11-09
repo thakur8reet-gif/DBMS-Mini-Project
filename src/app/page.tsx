@@ -45,6 +45,7 @@ export default function Home() {
   const [description, setDescription] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [query, setQuery] = useState("");
+  const [semanticConfigured, setSemanticConfigured] = useState<boolean | null>(null);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -93,6 +94,13 @@ export default function Home() {
     runBackgroundWork();
     const timer = window.setInterval(runBackgroundWork, 60_000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/search", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data: { configured?: boolean }) => setSemanticConfigured(data.configured === true))
+      .catch(() => setSemanticConfigured(false));
   }, []);
 
   async function load() {
@@ -297,7 +305,11 @@ export default function Home() {
           <hr />
           <h2>Semantic incident search</h2>
           <p className="muted">
-            Find similar historical tickets by meaning, not exact keywords.
+            {semanticConfigured === false
+              ? "Semantic search is not configured on this deployment."
+              : semanticConfigured === null
+                ? "Checking semantic search availability…"
+                : "Find similar historical tickets by meaning, not exact keywords."}
           </p>
           <form onSubmit={search}>
             <label className="field">
@@ -314,8 +326,8 @@ export default function Home() {
                 placeholder="e.g. VPN disconnects after login"
               />
             </label>
-            <button className="primary" disabled={searching}>
-              {searching ? "Searching…" : "Find similar tickets"}
+            <button className="primary" disabled={searching || semanticConfigured !== true}>
+              {searching ? "Searching…" : semanticConfigured === true ? "Find similar tickets" : "Search unavailable"}
             </button>
           </form>
           {results.map((result) => (

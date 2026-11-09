@@ -20,6 +20,7 @@ The course brief requires a two-member team approved by the instructor, with bot
 
 - [x] Enter both official member names and SRNs.
 - [ ] Confirm instructor approval.
+- [ ] Confirm `ResolveIQ` is unused by another project in the DBMS section; a public web search cannot verify the class roster.
 - [ ] Maintain individual GitHub commits under each member's own account.
 - [ ] Record a short contribution log for each milestone.
 

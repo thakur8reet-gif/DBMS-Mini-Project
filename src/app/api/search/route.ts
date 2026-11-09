@@ -4,6 +4,10 @@ import {getSession} from "@/lib/session";
 import {pool} from "@/lib/db";
 import {searchTickets} from "@/lib/qdrant";
 const schema=z.object({query:z.string().trim().min(3).max(2000),limit:z.number().int().min(1).max(20).default(5)});
+export async function GET(){
+ const configured=Boolean(process.env.SEMANTIC_SEARCH_URL||(process.env.QDRANT_URL&&process.env.QDRANT_API_KEY));
+ return NextResponse.json({configured});
+}
 export async function POST(req:NextRequest){
  const session=await getSession();if(!session)return NextResponse.json({error:"Authentication required"},{status:401});
  const parsed=schema.safeParse(await req.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:"Invalid search query"},{status:400});
@@ -23,5 +27,8 @@ export async function POST(req:NextRequest){
   const {rows}=await pool.query<TicketSearchRow>("SELECT ticket_id,subject,customer_name,priority_name,status_name FROM v_ticket_operations WHERE tenant_id=$1 AND ticket_id=ANY($2::bigint[])",[session.tenantId,ids]);
   const byId=new Map(rows.map(row=>[Number(row.ticket_id),row]));
   return NextResponse.json({results:matches.flatMap(result=>{const row=byId.get(result.ticket_id);return row?[{...row,score:result.score}]:[]})});
- }catch{return NextResponse.json({error:"Semantic search is temporarily unavailable"},{status:503});}
+ }catch{
+  const configured=Boolean(process.env.SEMANTIC_SEARCH_URL||(process.env.QDRANT_URL&&process.env.QDRANT_API_KEY));
+  return NextResponse.json({error:configured?"Semantic search is temporarily unavailable":"Semantic search is not configured on this deployment"},{status:503});
+ }
 }
