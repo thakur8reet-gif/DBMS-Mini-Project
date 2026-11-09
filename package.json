@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "db:migrate": "node scripts/migrate.cjs",
+    "db:create-admin": "node scripts/create-admin.cjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
