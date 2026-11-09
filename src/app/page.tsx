@@ -24,6 +24,15 @@ type SearchResult = {
   score: number;
 };
 
+type QueueFilter = "all" | "open" | "breached";
+
+function statusTone(status: string) {
+  const normalized = status.toLowerCase();
+  if (normalized.includes("resolv") || normalized.includes("clos")) return "complete";
+  if (normalized.includes("progress")) return "active";
+  return "waiting";
+}
+
 export default function Home() {
   const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -38,6 +47,7 @@ export default function Home() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [queueFilter, setQueueFilter] = useState<QueueFilter>("all");
 
   const fetchTickets = useCallback(async () => {
     const response = await fetch("/api/tickets");
@@ -156,6 +166,11 @@ export default function Home() {
   const open = tickets.filter(
     (ticket) => !["Resolved", "Closed"].includes(ticket.status_name),
   ).length;
+  const visibleTickets = tickets.filter((ticket) => {
+    if (queueFilter === "open") return !["Resolved", "Closed"].includes(ticket.status_name);
+    if (queueFilter === "breached") return ticket.resolution_breached;
+    return true;
+  });
 
   return (
     <main className="shell">
@@ -177,17 +192,20 @@ export default function Home() {
       </header>
 
       <section className="grid" aria-label="Ticket summary">
-        <div className="card">
-          <div className="muted">Total tickets</div>
+        <div className="card stat-card stat-total">
+          <div className="stat-label">Total tickets</div>
           <div className="metric">{tickets.length}</div>
+          <div className="stat-note">Across this workspace</div>
         </div>
-        <div className="card">
-          <div className="muted">Open tickets</div>
+        <div className="card stat-card stat-open">
+          <div className="stat-label">Open tickets</div>
           <div className="metric">{open}</div>
+          <div className="stat-note">Awaiting resolution</div>
         </div>
-        <div className="card">
-          <div className="muted">Resolution breaches</div>
+        <div className="card stat-card stat-breached">
+          <div className="stat-label">Resolution breaches</div>
           <div className="metric">{breached}</div>
+          <div className="stat-note">Past the SLA target</div>
         </div>
       </section>
 
@@ -200,8 +218,27 @@ export default function Home() {
 
       <section className="layout">
         <div className="card">
-          <h2>Ticket queue</h2>
-          <p className="muted">Tenant-scoped operational worklist</p>
+          <div className="section-heading">
+            <div>
+              <h2>Ticket queue</h2>
+              <p className="muted">Your team’s current support workload</p>
+            </div>
+            <span className="queue-count">{visibleTickets.length} shown</span>
+          </div>
+          <div className="queue-filters" role="group" aria-label="Filter ticket queue">
+            {(["all", "open", "breached"] as const).map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                className={`filter-button ${queueFilter === filter ? "selected" : ""}`}
+                aria-pressed={queueFilter === filter}
+                onClick={() => setQueueFilter(filter)}
+              >
+                {filter === "all" ? "All tickets" : filter === "open" ? "Open" : "Breached"}
+                <span>{filter === "all" ? tickets.length : filter === "open" ? open : breached}</span>
+              </button>
+            ))}
+          </div>
           {loading ? (
             <p className="empty" role="status">Loading tickets…</p>
           ) : (
@@ -215,28 +252,29 @@ export default function Home() {
                     <th>Priority</th>
                     <th>Status</th>
                     <th>Assignee</th>
+                    <th>Created</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tickets.map((ticket) => (
+                  {visibleTickets.map((ticket) => (
                     <tr key={ticket.ticket_id}>
                       <td>#{ticket.ticket_id}</td>
                       <td>{ticket.subject}</td>
                       <td>{ticket.customer_name}</td>
-                      <td>
-                        <span className="pill">{ticket.priority_name}</span>
-                      </td>
-                      <td>
-                        {ticket.status_name}
-                        {ticket.resolution_breached ? " · Breached" : ""}
-                      </td>
+                      <td><span className={`priority-pill priority-${ticket.priority_name.toLowerCase()}`}>{ticket.priority_name}</span></td>
+                      <td><span className={`status-pill ${ticket.resolution_breached ? "breached" : statusTone(ticket.status_name)}`}>{ticket.resolution_breached ? "SLA breached" : ticket.status_name}</span></td>
                       <td>{ticket.assignee_name || "Unassigned"}</td>
+                      <td>{new Date(ticket.created_at).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {tickets.length === 0 && (
-                <p className="empty">No tickets yet. Create one to start tracking support work.</p>
+              {visibleTickets.length === 0 && (
+                <p className="empty">
+                  {tickets.length === 0
+                    ? "No tickets yet. Create one to start tracking support work."
+                    : "No tickets match this filter."}
+                </p>
               )}
             </div>
           )}
@@ -256,6 +294,7 @@ export default function Home() {
                 onChange={(event) => {
                   setQuery(event.target.value);
                   setHasSearched(false);
+                  setResults([]);
                 }}
                 placeholder="e.g. VPN disconnects after login"
               />
