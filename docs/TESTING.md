@@ -39,8 +39,9 @@ These results were run against a disposable local PostgreSQL 18.6 database, not 
 - Local app flow: sign-in **200**, ticket list **200**, ticket create **201**, worker tick **200** and created **1** SLA escalation.
 - Semantic search configuration check: **not configured** in the isolated test process; the app correctly disabled search and returned `503` with “Semantic search is not configured on this deployment.”
 - Production migration 008: **applied** using the Vercel production environment runner; it queues pre-existing tickets for vector indexing.
+- Production probes on the latest deployment: `/login` **200**, semantic status **200** with `configured: false`, and an intentionally invalid login **401** (the expected rejection).
 - Screenshots: still needed in `docs/screenshots/` after browser access is enabled.
 
 ## Hosted deployment status
 
-Deployment `dpl_7336MdD9r468SJ1VcQhwfLLhQrnw` was ready at `https://resolveiq-gamma.vercel.app` before the latest UI status change. Production variables currently include `DATABASE_URL`, `AUTH_SECRET`, and `CRON_SECRET`; Qdrant credentials are not configured there. The dashboard worker evaluates SLA rules every minute while an authenticated dashboard is open. Vercel Hobby runs the all-tenant catch-up once daily. Semantic search must remain described as unavailable until Qdrant Cloud is configured and the latest UI update is deployed.
+Deployment `dpl_AfSsBBtLMHYpHtVXhP1AZifRx9Af` is ready at `https://resolveiq-gamma.vercel.app`. Production variables currently include `DATABASE_URL`, `AUTH_SECRET`, and `CRON_SECRET`; Qdrant credentials are not configured there. The dashboard worker evaluates SLA rules every minute while an authenticated dashboard is open. Vercel Hobby runs the all-tenant catch-up once daily. The deployed UI reports semantic search as unavailable until Qdrant Cloud is configured.
