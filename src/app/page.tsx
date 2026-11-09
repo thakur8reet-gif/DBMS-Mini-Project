@@ -13,6 +13,7 @@ type Ticket = {
   assignee_name: string | null;
   created_at: string;
   resolution_breached: boolean;
+  escalated: boolean;
 };
 
 type SearchResult = {
@@ -84,6 +85,15 @@ export default function Home() {
       active = false;
     };
   }, [fetchTickets]);
+
+  useEffect(() => {
+    const runBackgroundWork = () => {
+      void fetch("/api/worker/tick", { method: "POST" }).catch(() => {});
+    };
+    runBackgroundWork();
+    const timer = window.setInterval(runBackgroundWork, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -262,7 +272,12 @@ export default function Home() {
                       <td>{ticket.subject}</td>
                       <td>{ticket.customer_name}</td>
                       <td><span className={`priority-pill priority-${ticket.priority_name.toLowerCase()}`}>{ticket.priority_name}</span></td>
-                      <td><span className={`status-pill ${ticket.resolution_breached ? "breached" : statusTone(ticket.status_name)}`}>{ticket.resolution_breached ? "SLA breached" : ticket.status_name}</span></td>
+                      <td>
+                        <span className={`status-pill ${ticket.resolution_breached ? "breached" : statusTone(ticket.status_name)}`}>
+                          {ticket.resolution_breached ? "SLA breached" : ticket.status_name}
+                        </span>
+                        {ticket.escalated && <span className="escalation-pill">Escalated</span>}
+                      </td>
                       <td>{ticket.assignee_name || "Unassigned"}</td>
                       <td>{new Date(ticket.created_at).toLocaleDateString()}</td>
                     </tr>

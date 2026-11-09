@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint src",
     "db:migrate": "node scripts/migrate.cjs",
-    "db:create-admin": "node scripts/create-admin.cjs"
+    "db:create-admin": "node scripts/create-admin.cjs",
+    "db:migrate:escalation": "node scripts/migrate.cjs db/007_demo_escalation.sql"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

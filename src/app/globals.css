@@ -68,6 +68,7 @@ tbody tr:hover { background: #f8faff; }
 .status-pill.active { background: #edf3ff; color: #3158a5; }
 .status-pill.waiting { background: #f0f2f6; color: #536076; }
 .status-pill.breached { background: #fff0ed; color: #b8392d; }
+.escalation-pill { display: inline-flex; margin-left: 6px; border-radius: 99px; padding: 5px 9px; background: #f3eaff; color: #6931a5; font-size: 11px; font-weight: 750; }
 .field { display: grid; gap: 7px; margin: 15px 0; font-size: 13px; font-weight: 650; }
 .field input, .field textarea, .field select {
   width: 100%;

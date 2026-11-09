@@ -8,7 +8,10 @@ async function main() {
   }
 
   const migrationDirectory = path.join(__dirname, "..", "db");
-  const migrations = fs
+  const requested = process.argv[2];
+  const migrations = requested
+    ? [path.basename(requested)]
+    : fs
     .readdirSync(migrationDirectory)
     .filter((file) => /^00\d+.*\.sql$/.test(file))
     .sort();
@@ -17,6 +20,9 @@ async function main() {
   await client.connect();
   try {
     for (const migration of migrations) {
+      if (!/^00\d+.*\.sql$/.test(migration)) {
+        throw new Error(`Invalid migration file: ${migration}`);
+      }
       const sql = fs.readFileSync(path.join(migrationDirectory, migration), "utf8");
       await client.query(sql);
       process.stdout.write(`Applied ${migration}\n`);
