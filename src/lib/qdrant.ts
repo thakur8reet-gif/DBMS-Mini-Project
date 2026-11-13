@@ -26,16 +26,35 @@ async function request(path: string, init?: RequestInit) {
   });
 }
 
-export async function qdrantIsReachable() {
+let qdrantSearchCheck: { checkedAt: number; available: boolean } | null = null;
+
+export async function qdrantSearchIsAvailable() {
   if (!process.env.QDRANT_URL || !process.env.QDRANT_API_KEY) return false;
-  try {
-    const response = await request("/collections", {
-      signal: AbortSignal.timeout(5000),
-    });
-    return response.ok;
-  } catch {
-    return false;
+  if (qdrantSearchCheck && Date.now() - qdrantSearchCheck.checkedAt < 30_000) {
+    return qdrantSearchCheck.available;
   }
+  let available = false;
+  try {
+    await ensureQdrantCollection();
+    const response = await request(
+      `/collections/${encodeURIComponent(collection)}/points/query`,
+      {
+        method: "POST",
+        signal: AbortSignal.timeout(8000),
+        body: JSON.stringify({
+          query: { text: "ResolveIQ semantic search health check", model },
+          filter: { must: [{ key: "tenant_id", match: { value: 0 } }] },
+          limit: 1,
+          with_payload: false,
+        }),
+      },
+    );
+    available = response.ok;
+  } catch {
+    available = false;
+  }
+  qdrantSearchCheck = { checkedAt: Date.now(), available };
+  return available;
 }
 
 export async function ensureQdrantCollection() {
