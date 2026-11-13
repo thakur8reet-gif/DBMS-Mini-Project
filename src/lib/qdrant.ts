@@ -34,8 +34,10 @@ export async function qdrantSearchIsAvailable() {
     return qdrantSearchCheck.available;
   }
   let available = false;
+  let stage = "collection";
   try {
     await ensureQdrantCollection();
+    stage = "text-query";
     const response = await request(
       `/collections/${encodeURIComponent(collection)}/points/query`,
       {
@@ -50,8 +52,12 @@ export async function qdrantSearchIsAvailable() {
       },
     );
     available = response.ok;
+    if (!response.ok) {
+      console.warn("Qdrant semantic health query returned HTTP", response.status);
+    }
   } catch {
     available = false;
+    console.warn("Qdrant semantic health check failed during", stage);
   }
   qdrantSearchCheck = { checkedAt: Date.now(), available };
   return available;
