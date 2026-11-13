@@ -52,6 +52,7 @@ Deployment `dpl_4JH3KQKgehSyLF8CkJUqgdE7sUab` is ready at `https://resolveiq-gam
 - Created ticket **#5**, `Demo verification 3: VPN drops after sign-in`; the app confirmed ticket creation and displayed it in the queue.
 - The worker reported **1 ticket indexed** from **1 queued ticket**.
 - Searched with `Remote staff cannot keep their VPN session connected after logging in`; semantic results included ticket **#5** with similarity **0.618**.
+- After correcting the older indexed records, the admin **Refresh search index** action requeued and indexed **5 of 5** workspace tickets. Searching `login` returned tickets **#3, #4, #5, #1, and #2** in descending similarity order; #2 scored **0.032**.
 - Ticket **#3** appeared as escalated in the hosted queue; the worker reported **1 SLA escalation** during the run.
 - A worker run earlier returned `indexed: 0, queued: 0`, and search returned no matches. Investigation found PostgreSQL `BIGINT` IDs were being sent to Qdrant as strings despite the tenant integer index. The worker now converts IDs to numbers before indexing; the hosted test above passed after deployment.
 
