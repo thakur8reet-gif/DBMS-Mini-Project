@@ -44,4 +44,15 @@ These results were run against a disposable local PostgreSQL 18.6 database, not 
 
 ## Hosted deployment status
 
-Deployment `dpl_E8XRT6Y9qebntGgjGLxcpo2aqedu` is ready at `https://resolveiq-gamma.vercel.app` (2026-11-13). Production Qdrant credentials are configured. The production semantic health endpoint returned `{"configured":true}` after Qdrant Cloud accepted the inference model and tenant filter index. This confirms hosted semantic search is reachable; an authenticated create-ticket → index → search result still needs to be captured with a real demo account and ticket. The dashboard worker evaluates SLA rules every minute while an authenticated dashboard is open. Vercel Hobby runs the all-tenant catch-up once daily. Screenshots of the running application still need to be added under `docs/screenshots/`.
+Deployment `dpl_4JH3KQKgehSyLF8CkJUqgdE7sUab` is ready at `https://resolveiq-gamma.vercel.app` (2026-11-13). Production Qdrant credentials are configured. The semantic health endpoint returned `{"configured":true}` after Qdrant Cloud accepted the inference model and tenant filter index.
+
+### Hosted end-to-end run — 2026-11-13
+
+- Signed in to the production dashboard successfully.
+- Created ticket **#5**, `Demo verification 3: VPN drops after sign-in`; the app confirmed ticket creation and displayed it in the queue.
+- The worker reported **1 ticket indexed** from **1 queued ticket**.
+- Searched with `Remote staff cannot keep their VPN session connected after logging in`; semantic results included ticket **#5** with similarity **0.618**.
+- Ticket **#3** appeared as escalated in the hosted queue; the worker reported **1 SLA escalation** during the run.
+- A worker run earlier returned `indexed: 0, queued: 0`, and search returned no matches. Investigation found PostgreSQL `BIGINT` IDs were being sent to Qdrant as strings despite the tenant integer index. The worker now converts IDs to numbers before indexing; the hosted test above passed after deployment.
+
+The dashboard worker evaluates SLA rules every minute while an authenticated dashboard is open. Vercel Hobby runs the all-tenant catch-up once daily. Screenshots of the running application still need to be added under `docs/screenshots/`.
