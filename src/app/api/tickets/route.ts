@@ -34,6 +34,8 @@ export async function POST(req:NextRequest){
     VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING ticket_id`,[session.tenantId,customer.rows[0].customer_id,ref.category_id,ref.priority_id,ref.status_id,session.userId,data.subject,data.description]);
   await client.query(`INSERT INTO sla_tracking(tenant_id,ticket_id,sla_policy_id,response_due_at,resolution_due_at)
     VALUES($1,$2,$3,now()+make_interval(mins=>$4),now()+make_interval(mins=>$5))`,[session.tenantId,ticket.rows[0].ticket_id,ref.sla_policy_id,ref.response_time_minutes,ref.resolution_time_minutes]);
+  await client.query(`INSERT INTO ticket_vector_queue(tenant_id,ticket_id)
+    VALUES($1,$2) ON CONFLICT(tenant_id,ticket_id) DO NOTHING`,[session.tenantId,ticket.rows[0].ticket_id]);
   await client.query("COMMIT");
   return NextResponse.json({ticketId:ticket.rows[0].ticket_id},{status:201});
  }catch(error){await client.query("ROLLBACK");const message=error instanceof Error?error.message:"Ticket creation failed";return NextResponse.json({error:message.includes("configuration missing")?message:"Unable to create ticket"},{status:message.includes("configuration missing")?422:500});}
