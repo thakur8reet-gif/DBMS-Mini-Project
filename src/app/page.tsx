@@ -306,10 +306,10 @@ export default function Home() {
           <h2>Semantic incident search</h2>
           <p className="muted">
             {semanticConfigured === false
-              ? "Semantic search is not configured on this deployment."
+              ? "Semantic search is not configured or reachable on this deployment."
               : semanticConfigured === null
                 ? "Checking semantic search availability…"
-                : "Find similar historical tickets by meaning, not exact keywords."}
+                : "Search service is reachable. Find similar historical tickets by meaning, not exact keywords."}
           </p>
           <form onSubmit={search}>
             <label className="field">

@@ -2,10 +2,11 @@ import {NextRequest,NextResponse} from "next/server";
 import {z} from "zod";
 import {getSession} from "@/lib/session";
 import {pool} from "@/lib/db";
-import {searchTickets} from "@/lib/qdrant";
+import {qdrantIsReachable,searchTickets} from "@/lib/qdrant";
 const schema=z.object({query:z.string().trim().min(3).max(2000),limit:z.number().int().min(1).max(20).default(5)});
+export const dynamic="force-dynamic";
 export async function GET(){
- const configured=Boolean(process.env.SEMANTIC_SEARCH_URL||(process.env.QDRANT_URL&&process.env.QDRANT_API_KEY));
+ const configured=process.env.SEMANTIC_SEARCH_URL?true:await qdrantIsReachable();
  return NextResponse.json({configured});
 }
 export async function POST(req:NextRequest){

@@ -26,6 +26,18 @@ async function request(path: string, init?: RequestInit) {
   });
 }
 
+export async function qdrantIsReachable() {
+  if (!process.env.QDRANT_URL || !process.env.QDRANT_API_KEY) return false;
+  try {
+    const response = await request("/collections", {
+      signal: AbortSignal.timeout(5000),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function ensureQdrantCollection() {
   const encoded = encodeURIComponent(collection);
   const check = await request(`/collections/${encoded}`);
