@@ -51,7 +51,13 @@ async function tick(tenantId: number | null) {
   let indexed = 0;
   for (const ticket of queued.rows) {
     try {
-      await indexTicket(ticket);
+      await indexTicket({
+        ...ticket,
+        tenant_id: Number(ticket.tenant_id),
+        ticket_id: Number(ticket.ticket_id),
+        category_id: Number(ticket.category_id),
+        priority_id: Number(ticket.priority_id),
+      });
       await pool.query(
         "DELETE FROM ticket_vector_queue WHERE tenant_id=$1 AND ticket_id=$2",
         [ticket.tenant_id, ticket.ticket_id],
