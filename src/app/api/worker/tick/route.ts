@@ -76,7 +76,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    return NextResponse.json(await tick(null));
+    const result = await tick(null);
+    console.info("Scheduled worker completed", result);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("scheduled worker failed", error);
     return NextResponse.json({ error: "Scheduled worker failed" }, { status: 500 });
@@ -89,7 +91,9 @@ export async function POST() {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
   try {
-    return NextResponse.json(await tick(session.tenantId));
+    const result = await tick(session.tenantId);
+    console.info("Interactive worker completed", result);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("interactive worker failed", error);
     return NextResponse.json({ error: "Background work could not run" }, { status: 500 });
