@@ -91,15 +91,31 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session || !["ADMIN", "AGENT"].includes(session.role)) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
   try {
+    const body = await request.json().catch(() => null) as { reindexAll?: boolean } | null;
+    let requeued = 0;
+    if (body?.reindexAll) {
+      if (session.role !== "ADMIN") {
+        return NextResponse.json({ error: "Administrator role required" }, { status: 403 });
+      }
+      const result = await pool.query(
+        `INSERT INTO ticket_vector_queue(tenant_id, ticket_id)
+         SELECT tenant_id, ticket_id FROM ticket WHERE tenant_id=$1
+         ON CONFLICT(tenant_id, ticket_id) DO UPDATE
+         SET queued_at=now(), attempts=0, last_error=NULL
+         RETURNING ticket_id`,
+        [session.tenantId],
+      );
+      requeued = result.rowCount ?? 0;
+    }
     const result = await tick(session.tenantId);
-    console.info("Interactive worker completed", result);
-    return NextResponse.json(result);
+    console.info("Interactive worker completed", { ...result, requeued });
+    return NextResponse.json({ ...result, requeued });
   } catch (error) {
     console.error("interactive worker failed", error);
     return NextResponse.json({ error: "Background work could not run" }, { status: 500 });

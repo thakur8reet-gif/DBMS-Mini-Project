@@ -37,6 +37,7 @@ function statusTone(status: string) {
 export default function Home() {
   const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [canReindex, setCanReindex] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -49,27 +50,30 @@ export default function Home() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [reindexing, setReindexing] = useState(false);
   const [queueFilter, setQueueFilter] = useState<QueueFilter>("all");
 
   const fetchTickets = useCallback(async () => {
     const response = await fetch("/api/tickets");
     const data = (await response.json()) as {
       tickets?: Ticket[];
+      role?: string;
       error?: string;
     };
     if (!response.ok) {
       throw new Error(data.error || "Unable to load tickets");
     }
-    return data.tickets ?? [];
+    return { tickets: data.tickets ?? [], role: data.role };
   }, []);
 
   useEffect(() => {
     let active = true;
 
     fetchTickets()
-      .then((items) => {
+      .then(({ tickets: items, role }) => {
         if (active) {
           setTickets(items);
+          setCanReindex(role === "ADMIN");
           setError("");
         }
       })
@@ -107,7 +111,9 @@ export default function Home() {
     setLoading(true);
     setError("");
     try {
-      setTickets(await fetchTickets());
+      const data = await fetchTickets();
+      setTickets(data.tickets);
+      setCanReindex(data.role === "ADMIN");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Request failed");
     } finally {
@@ -171,6 +177,30 @@ export default function Home() {
       setError(cause instanceof Error ? cause.message : "Search failed");
     } finally {
       setSearching(false);
+    }
+  }
+
+  async function reindexTickets() {
+    setReindexing(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/worker/tick", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reindexAll: true }),
+      });
+      const data = (await response.json()) as {
+        indexed?: number;
+        requeued?: number;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(data.error || "Unable to reindex tickets");
+      setNotice(`Search index refreshed: ${data.indexed ?? 0} of ${data.requeued ?? 0} tickets indexed.`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to reindex tickets");
+    } finally {
+      setReindexing(false);
     }
   }
 
@@ -311,6 +341,18 @@ export default function Home() {
                 ? "Checking semantic search availability…"
                 : "Search service is reachable. Find similar historical tickets by meaning, not exact keywords."}
           </p>
+          {canReindex && semanticConfigured === true && (
+            <div style={{ marginBottom: 16 }}>
+              <button
+                className="secondary"
+                type="button"
+                onClick={reindexTickets}
+                disabled={reindexing}
+              >
+                {reindexing ? "Refreshing search index…" : "Refresh search index"}
+              </button>
+            </div>
+          )}
           <form onSubmit={search}>
             <label className="field">
               Describe the issue

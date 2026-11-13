@@ -93,6 +93,9 @@ tbody tr:hover { background: #f8faff; }
 }
 .primary:hover:not(:disabled) { background: var(--blue-dark); transform: translateY(-1px); }
 .primary:disabled { cursor: wait; opacity: .65; }
+.secondary { border: 1px solid #cfdaed; border-radius: 9px; padding: 9px 13px; background: #f5f8ff; color: #244fae; font-size: 13px; font-weight: 700; cursor: pointer; }
+.secondary:hover:not(:disabled) { background: #eaf0ff; }
+.secondary:disabled { cursor: wait; opacity: .65; }
 .error { padding: 12px 14px; border: 1px solid #f3c5c0; border-radius: 10px; background: #fff4f2; color: #a52a20; font-size: 14px; }
 .success { padding: 11px 14px; border: 1px solid #b7e3cc; border-radius: 10px; background: #f0fbf5; color: #17663a; font-size: 14px; }
 hr { height: 1px; margin: 25px 0; border: 0; background: var(--line); }

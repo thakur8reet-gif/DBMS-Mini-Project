@@ -8,7 +8,7 @@ export async function GET(){
  const session=await getSession();if(!session)return NextResponse.json({error:"Authentication required"},{status:401});
  try{const {rows}=await pool.query(`SELECT v.ticket_id,v.subject,v.customer_name,v.priority_name,v.status_name,v.assignee_name,v.created_at,v.resolution_breached,
    EXISTS(SELECT 1 FROM escalation_log e WHERE e.tenant_id=v.tenant_id AND e.ticket_id=v.ticket_id) AS escalated
-   FROM v_ticket_operations v WHERE v.tenant_id=$1 ORDER BY v.created_at DESC LIMIT 200`,[session.tenantId]);return NextResponse.json({tickets:rows});}
+   FROM v_ticket_operations v WHERE v.tenant_id=$1 ORDER BY v.created_at DESC LIMIT 200`,[session.tenantId]);return NextResponse.json({tickets:rows,role:session.role});}
  catch(error){console.error("ticket list failed",error);return NextResponse.json({error:"Unable to retrieve tickets"},{status:500});}
 }
 export async function POST(req:NextRequest){
