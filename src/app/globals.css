@@ -102,6 +102,46 @@ hr { height: 1px; margin: 25px 0; border: 0; background: var(--line); }
 .empty { padding: 24px 12px; color: var(--muted); text-align: center; }
 .search-result { padding: 13px 2px; border-bottom: 1px solid #edf0f5; }
 .search-result:last-child { border-bottom: 0; }
+.workload-card { margin: 0 0 18px; }
+.workload-bars { display: grid; gap: 10px; margin-top: 14px; }
+.workload-row { display: grid; grid-template-columns: minmax(96px, 150px) 1fr 24px; align-items: center; gap: 12px; font-size: 13px; }
+.workload-row > span { color: #47536a; font-weight: 650; }
+.workload-row > b { text-align: right; }
+.workload-track { height: 8px; overflow: hidden; border-radius: 99px; background: #edf1f7; }
+.workload-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2459d3, #65a0ff); }
+.workflow-hint { margin: 16px 0 0; color: var(--muted); font-size: 12px; }
+.queue-tools { display: grid; grid-template-columns: minmax(200px, 1fr) 160px 160px; gap: 8px; margin: 0 0 12px; }
+.queue-tools input, .queue-tools select { min-width: 0; border: 1px solid #d6deea; border-radius: 8px; padding: 9px 10px; background: white; color: var(--ink); font-size: 12px; }
+.sla-time { color: #526078; font-size: 12px; font-weight: 650; }
+.overdue { color: #b8392d !important; }
+.text-button { padding: 0; border: 0; background: transparent; color: #2459d3; font-size: 12px; font-weight: 700; cursor: pointer; }
+.text-button:hover { text-decoration: underline; }
+.ticket-detail { margin-top: 22px; padding: 22px; border: 1px solid #dbe4f1; border-radius: 14px; background: linear-gradient(145deg,#fbfcff,#f5f8ff); }
+.detail-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+.detail-header h2 { margin: 5px 0; font-size: 22px; }
+.detail-header .muted { margin: 0; }
+.eyebrow { color: #3158a5; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+.ticket-description { margin: 18px 0; color: #46536b; line-height: 1.6; white-space: pre-wrap; }
+.sla-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin: 16px 0; }
+.sla-grid > div { display: grid; gap: 5px; padding: 12px; border: 1px solid #e3e9f2; border-radius: 10px; background: white; }
+.sla-grid span { color: var(--muted); font-size: 11px; }
+.sla-grid b { font-size: 13px; }
+.detail-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.detail-controls .field { margin: 8px 0; }
+.detail-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px; margin-top: 8px; }
+.detail-columns h3 { margin: 10px 0; font-size: 15px; }
+.detail-columns .field { margin: 10px 0; }
+.detail-columns .field textarea { min-height: 80px; }
+.check-field { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; color: #4f5c71; font-size: 12px; }
+.check-field input { accent-color: var(--blue); }
+.timeline { display: grid; gap: 0; margin-top: 14px; }
+.timeline-item { position: relative; display: grid; grid-template-columns: 12px 1fr; gap: 10px; padding: 0 0 17px; }
+.timeline-item:not(:last-child)::before { position: absolute; top: 10px; bottom: 0; left: 4px; width: 1px; content: ""; background: #dbe3ef; }
+.timeline-dot { z-index: 1; width: 9px; height: 9px; margin-top: 4px; border: 2px solid white; border-radius: 50%; background: #5581df; box-shadow: 0 0 0 1px #9fb6e8; }
+.timeline-item b { color: #334158; font-size: 12px; }
+.timeline-item p { margin: 5px 0; color: #526078; font-size: 12px; line-height: 1.5; white-space: pre-wrap; }
+.timeline-item small { display: block; margin-top: 4px; color: #8892a3; font-size: 10px; }
+.timeline-item em { margin-left: 4px; border-radius: 99px; padding: 2px 6px; background: #f3eaff; color: #6931a5; font-size: 9px; font-style: normal; }
 @media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 640px) {
   .shell { padding: 24px 16px 40px; }
@@ -110,5 +150,10 @@ hr { height: 1px; margin: 25px 0; border: 0; background: var(--line); }
   .card { padding: 18px; }
   .top > div:last-child { width: 100%; }
   .top button { flex: 1; }
+  .queue-tools { grid-template-columns: 1fr 1fr; }
+  .queue-tools input { grid-column: 1 / -1; }
+  .ticket-detail { padding: 16px; }
+  .detail-header { flex-direction: column; }
+  .sla-grid, .detail-controls, .detail-columns { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }

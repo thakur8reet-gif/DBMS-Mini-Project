@@ -10,7 +10,8 @@
     "db:migrate": "node scripts/migrate.cjs",
     "db:create-admin": "node scripts/create-admin.cjs",
     "db:migrate:escalation": "node scripts/migrate.cjs db/007_demo_escalation.sql",
-    "db:migrate:queue": "node scripts/migrate.cjs db/008_queue_existing_ticket_vectors.sql"
+    "db:migrate:queue": "node scripts/migrate.cjs db/008_queue_existing_ticket_vectors.sql",
+    "db:migrate:activity": "node scripts/migrate.cjs db/009_ticket_activity.sql"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

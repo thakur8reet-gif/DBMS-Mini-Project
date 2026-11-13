@@ -9,6 +9,8 @@
 6. Run the SLA evaluator and inspect breach flags and escalation_log.
 7. Search semantically similar incidents and show tenant filter enforcement.
 8. Demonstrate cross-tenant FK rejection and database validation checks.
+9. Open a ticket, move it through Open → In Progress → Resolved → Closed, reopen it, assign/reassign an agent, add a reply and internal note, and verify each transition appears in Activity history.
+10. Verify the queue text/status/priority filters and first-response/resolution countdowns; use an unrelated semantic query to confirm weak matches below the configured score floor are omitted.
 
 ## Automated tests
 Run `pip install -r tests/requirements.txt` then `pytest -q`. Set TEST_DATABASE_URL to a disposable PostgreSQL database after applying migrations. The suite checks schema objects, cross-tenant reference rejection, nonblank ticket constraints, and installation of the SLA function.
@@ -57,3 +59,11 @@ Deployment `dpl_4JH3KQKgehSyLF8CkJUqgdE7sUab` is ready at `https://resolveiq-gam
 - A worker run earlier returned `indexed: 0, queued: 0`, and search returned no matches. Investigation found PostgreSQL `BIGINT` IDs were being sent to Qdrant as strings despite the tenant integer index. The worker now converts IDs to numbers before indexing; the hosted test above passed after deployment.
 
 The dashboard worker evaluates SLA rules every minute while an authenticated dashboard is open. Vercel Hobby runs the all-tenant catch-up once daily. Screenshots of the running application still need to be added under `docs/screenshots/`.
+
+## Ticket workflow update — 2026-11-13
+
+The dashboard now supports tenant-scoped ticket details, status changes, assignment, customer-facing replies, internal notes, SLA countdowns, queue text/status/priority filters, a workload-by-status summary, and a ticket activity timeline. Database migration 009 adds the audit table and the In Progress/Closed states. Run `npm run db:migrate:activity` against the intended database before using the workflow on a fresh installation. The API also installs this idempotent schema the first time an authenticated user opens a ticket, so the hosted workflow can initialize its schema without exposing database credentials locally.
+
+Semantic search applies a configurable `QDRANT_MIN_SIMILARITY` floor (default 0.1). Results under the floor are hidden; PostgreSQL remains authoritative for tenant ownership.
+
+Verification for this update: `npm run lint` passed and `npm run build -- --webpack` passed. The new hosted status/assignment/comment flows still need a signed-in production smoke test and genuine screenshots before recording those as passed.

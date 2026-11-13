@@ -3,7 +3,7 @@
 ResolveIQ manages tenant-isolated support tickets, enforces response/resolution SLAs, audits escalations, and retrieves semantically similar incidents.
 
 ## Stack
-Next.js 15 / TypeScript · PostgreSQL 16 · Qdrant · Sentence Transformers all-MiniLM-L6-v2.
+Next.js 16 / TypeScript · PostgreSQL 16+ · Qdrant · Sentence Transformers all-MiniLM-L6-v2.
 
 ## Local setup
 1. Install Node.js 20+, Docker Compose, Python 3.10+.
@@ -14,6 +14,15 @@ Next.js 15 / TypeScript · PostgreSQL 16 · Qdrant · Sentence Transformers all-
    set -a; source .env; set +a
    for f in db/00*.sql; do psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done
    ```
+   On Windows PowerShell, load the values from `.env` into this terminal and run the Node migration runner (no `psql` command is needed):
+   ```powershell
+   Get-Content .env | ForEach-Object {
+     if ($_ -match '^\s*([^#][^=]*)=(.*)$') {
+       [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim(), 'Process')
+     }
+   }
+   npm run db:migrate
+   ```
 5. Install dependencies and run Next.js: `npm install && npm run dev`.
 6. Provision a login: `pip install -r services/requirements.txt && python services/create_user.py --tenant demo --name "Demo Admin" --email admin@example.test --role ADMIN`. Set a password when prompted.
 7. Start the private semantic service: `set -a; source .env; set +a; uvicorn services.semantic_api:app --host 127.0.0.1 --port 8000`.
@@ -22,7 +31,8 @@ Next.js 15 / TypeScript · PostgreSQL 16 · Qdrant · Sentence Transformers all-
 
 ## Database
 - ER model and data dictionary: [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md)
-- DDL and constraints: [db/001_schema.sql](db/001_schema.sql), migrations 002–006
+- DDL and constraints: [db/001_schema.sql](db/001_schema.sql), migrations 002–009
+- Ticket workflow: status and assignment changes, replies, internal notes, and a tenant-scoped activity history are available from each queue row. Status flow: Open → In Progress → Resolved → Closed; changing a resolved/closed ticket back to an active status reopens its SLA clock and is recorded in the timeline.
 - DML examples: [db/queries.sql](db/queries.sql)
 - Advanced SQL: [db/004_advanced_features.sql](db/004_advanced_features.sql)
 - Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
@@ -34,6 +44,8 @@ Never commit real secrets or production data. The semantic API should remain pri
 
 ## Hosted semantic search and SLA worker
 For the Vercel deployment, create a Qdrant Cloud cluster with Cloud Inference enabled and add `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION=ticket_embeddings`, and a private `CRON_SECRET` to the project environment. Cloud inference defaults to `sentence-transformers/all-minilm-l6-v2` (384 dimensions); override it with `QDRANT_EMBEDDING_MODEL` if needed. Redeploy after changing variables. The authenticated dashboard drains its tenant's vector queue and evaluates SLA deadlines every minute while open; Vercel Cron provides a daily all-tenant catch-up on the Hobby plan. See [docs/SEMANTIC_SEARCH.md](docs/SEMANTIC_SEARCH.md) for the schedule limits.
+
+Semantic matches below `QDRANT_MIN_SIMILARITY` are hidden (default `0.1`) to avoid displaying weak matches as useful suggestions. Set the variable to `0` to show all returned matches.
 
 ## Team and evaluation
 The course requires two instructor-approved members; complete [docs/TEAM.md](docs/TEAM.md) with real names/SRNs. Capture genuine screenshots and record actual test output in [docs/TESTING.md](docs/TESTING.md). The commit history contains one commit for each of the 17 requirements.

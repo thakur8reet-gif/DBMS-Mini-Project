@@ -23,6 +23,9 @@ export async function POST(req:NextRequest){
   }else{
    matches=await searchTickets(parsed.data.query,session.tenantId,parsed.data.limit);
   }
+  const configuredFloor=Number(process.env.QDRANT_MIN_SIMILARITY ?? "0.1");
+  const minimumScore=Number.isFinite(configuredFloor)?Math.max(0,Math.min(1,configuredFloor)):0.1;
+  matches=matches.filter((match)=>match.score>=minimumScore);
   const ids=matches.map(x=>x.ticket_id);if(!ids.length)return NextResponse.json({results:[]});
   type TicketSearchRow={ticket_id:number;subject:string;customer_name:string;priority_name:string;status_name:string};
   const {rows}=await pool.query<TicketSearchRow>("SELECT ticket_id,subject,customer_name,priority_name,status_name FROM v_ticket_operations WHERE tenant_id=$1 AND ticket_id=ANY($2::bigint[])",[session.tenantId,ids]);
