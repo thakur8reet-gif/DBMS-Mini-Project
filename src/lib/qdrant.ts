@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 const collection = process.env.QDRANT_COLLECTION || "ticket_embeddings";
 const model =
-  process.env.EMBEDDING_MODEL || "sentence-transformers/all-MiniLM-L6-v2";
+  process.env.QDRANT_EMBEDDING_MODEL || "sentence-transformers/all-minilm-l6-v2";
 
 function configuration() {
   const endpoint = process.env.QDRANT_URL;
