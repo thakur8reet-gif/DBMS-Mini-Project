@@ -53,12 +53,7 @@ export async function qdrantSearchIsAvailable() {
     );
     available = response.ok;
     if (!response.ok) {
-      const { apiKey, endpoint } = configuration();
-      const detail = (await response.text())
-        .replaceAll(apiKey, "[redacted]")
-        .replaceAll(endpoint, "[endpoint]")
-        .slice(0, 500);
-      console.warn("Qdrant semantic health query returned HTTP", response.status, detail);
+      console.warn("Qdrant semantic health query returned HTTP", response.status);
     }
   } catch {
     available = false;
@@ -71,17 +66,25 @@ export async function qdrantSearchIsAvailable() {
 export async function ensureQdrantCollection() {
   const encoded = encodeURIComponent(collection);
   const check = await request(`/collections/${encoded}`);
-  if (check.ok) return;
-  if (check.status !== 404) throw new Error("Unable to inspect Qdrant collection");
+  if (!check.ok) {
+    if (check.status !== 404) throw new Error("Unable to inspect Qdrant collection");
+    const created = await request(`/collections/${encoded}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        vectors: { size: 384, distance: "Cosine" },
+      }),
+    });
+    if (!created.ok && created.status !== 409) {
+      throw new Error("Unable to create Qdrant collection");
+    }
+  }
 
-  const created = await request(`/collections/${encoded}`, {
+  const index = await request(`/collections/${encoded}/index`, {
     method: "PUT",
-    body: JSON.stringify({
-      vectors: { size: 384, distance: "Cosine" },
-    }),
+    body: JSON.stringify({ field_name: "tenant_id", field_schema: "integer" }),
   });
-  if (!created.ok && created.status !== 409) {
-    throw new Error("Unable to create Qdrant collection");
+  if (!index.ok && index.status !== 409) {
+    throw new Error("Unable to create Qdrant tenant index");
   }
 }
 
