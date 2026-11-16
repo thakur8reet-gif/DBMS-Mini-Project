@@ -313,8 +313,23 @@ export default function Home() {
   }
 
   return (
-    <main className="shell">
-      <header className="top">
+    <div className="app-frame">
+      <aside className="sidebar">
+        <a className="sidebar-brand" href="#overview"><span className="brand-mark">R</span><span>Resolve<span>IQ</span></span></a>
+        <div className="sidebar-label">WORKSPACE</div>
+        <nav className="side-nav" aria-label="Main navigation">
+          <a className="nav-link active" href="#overview"><span className="nav-icon">▦</span> Overview</a>
+          <a className="nav-link" href="#queue"><span className="nav-icon">☷</span> Ticket queue</a>
+          <a className="nav-link" href="#search"><span className="nav-icon">⌕</span> Smart search</a>
+          <a className="nav-link" href="#create"><span className="nav-icon">＋</span> Create ticket</a>
+        </nav>
+        <div className="sidebar-bottom">
+          <div className="workspace-status"><span className="live-dot" /> Systems operational</div>
+          <div className="sidebar-caption">HELPDESK · SLA INTELLIGENCE</div>
+        </div>
+      </aside>
+      <main className="shell">
+      <header className="top" id="overview">
         <div>
           <div className="brand">
             ResolveIQ <span className="pill">SLA Intelligence</span>
@@ -526,7 +541,7 @@ export default function Home() {
           )}
         </div>
 
-        <form className="card" onSubmit={create}>
+        <form className="card create-card" id="create" onSubmit={create}>
           <h2>Create ticket</h2>
           <p className="muted">
             Ticket and SLA tracking are created atomically.
@@ -565,6 +580,7 @@ export default function Home() {
           </button>
         </form>
       </section>
-    </main>
+      </main>
+    </div>
   );
 }
