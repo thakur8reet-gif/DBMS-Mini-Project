@@ -384,7 +384,7 @@ export default function Home() {
       {notice && <p className="success" role="status">{notice}</p>}
 
       <section className="layout">
-        <div className="card">
+        <div className="card queue-card" id="queue">
           <div className="section-heading">
             <div>
               <h2>Ticket queue</h2>
@@ -482,7 +482,7 @@ export default function Home() {
             </div>
           </section>}
 
-          <hr />
+          <hr id="search" />
           <h2>Semantic incident search</h2>
           <p className="muted">
             {semanticConfigured === false
